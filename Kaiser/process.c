@@ -350,70 +350,48 @@ ULONG ProcessGetSystemModuleBase(HANDLE hProcess, LPCWSTR szModuleName, HMODULE 
 // Returns TRUE in bIsPatched if the patch was successful.
 // lpOriginalPattern can be NULL in which nOriginalSize will be ignored.
 ULONG ProcessPatchMemoryPattern(HANDLE hProcess, DWORD_PTR dwBaseAddress, DWORD_PTR dwEndAddress, DWORD_PTR dwOffset, LPCBYTE lpSearchPattern, SIZE_T nSearchSize, LPCBYTE lpReplacePattern, SIZE_T nReplaceSize, PBOOL bIsPatched) {
-	// This is going to be terribly unoptimised.
-	// My apologies!
+	// reading from process just once for optimization, IG?
 
 	// Initialize bIsPatched.
 	*bIsPatched = FALSE;
-
-	// Allocate memory that is the same size as the pattern size 
-	// to be read from the target process for pattern checking.
-	LPBYTE lpReadPattern = _HeapAlloc(HEAP_ZERO_MEMORY, nSearchSize);
-	if (lpReadPattern == NULL) {
+	SIZE_T nRead = 0;
+	DWORD_PTR lpTargetAddress;
+	DWORD flOldProtect;
+	DWORD dwQuerySize = dwEndAddress - dwBaseAddress;
+	LPBYTE lpSearchBuffer = _HeapAlloc(HEAP_ZERO_MEMORY, dwQuerySize);
+	if (lpSearchBuffer == NULL) {
 		return GetLastError();
 	}
-
-	// Search for the first byte.
-	for (DWORD_PTR i = dwBaseAddress; i < dwEndAddress; i++) {
-		// Read the first byte.
-		BYTE bFirst = 0;
-		SIZE_T nRead = 0;
-		if (ReadProcessMemory(hProcess, (LPCVOID)i, &bFirst, sizeof(bFirst), &nRead) == FALSE) {
-			_HeapFree(lpReadPattern);
+	if (ReadProcessMemory(hProcess, dwBaseAddress, lpSearchBuffer, dwQuerySize, &nRead) == FALSE) {
+			_HeapFree(lpSearchBuffer);
 			return GetLastError();
-		}
-
-		// Check if the first byte of the pattern matches.
-		if (bFirst == lpSearchPattern[0]) {
-			// Reset just in case.
-			ZeroMemory(lpReadPattern, nSearchSize);
-
-			// Read the pattern.
-			if (ReadProcessMemory(hProcess, (LPCVOID)i, (LPVOID)lpReadPattern, nSearchSize, &nRead) == FALSE) {
-				_HeapFree(lpReadPattern);
-				return GetLastError();
-			}
-
-			// Check the pattern.
-			if (!memcmp(lpSearchPattern, lpReadPattern, nSearchSize)) {
-				// Unprotect memory region for write.
-				DWORD flOldProtect = 0;
-				// TODO Fix and make this cleaner?
-				if (VirtualProtectEx(hProcess, (LPVOID)(i + dwOffset), nReplaceSize, PAGE_EXECUTE_READWRITE, &flOldProtect) == FALSE) {
-					_HeapFree(lpReadPattern);
+	}
+	for (LPBYTE i = lpSearchBuffer; i < lpSearchBuffer + dwQuerySize; i++){
+		if (!memcmp(lpSearchPattern, i, dwQuerySize)){
+			lpTargetAddress = dwBaseAddress + (DWORD_PTR)(i-lpSearchBuffer);
+			
+			if (VirtualProtectEx(hProcess, lpTargetAddress, nReplaceSize, PAGE_EXECUTE_READWRITE, &flOldProtect) == FALSE) {
+					_HeapFree(lpSearchBuffer);
 					return GetLastError();
-				}
+			}
 
 				// Replace if pattern matches.
-				if (WriteProcessMemory(hProcess, (LPVOID)(i + dwOffset), lpReplacePattern, nReplaceSize, NULL) == FALSE) {
-					_HeapFree(lpReadPattern);
+			if (WriteProcessMemory(hProcess, lpTargetAddress, lpReplacePattern, nReplaceSize, NULL) == FALSE) {
+					_HeapFree(lpSearchBuffer);
 					return GetLastError();
-				}
+			}
 
 				// Reprotect memory region.
-				if (VirtualProtectEx(hProcess, (LPVOID)(i + dwOffset), nReplaceSize, flOldProtect, &flOldProtect) == FALSE) {
-					_HeapFree(lpReadPattern);
+			if (VirtualProtectEx(hProcess, (LPVOID)(i + dwOffset), nReplaceSize, flOldProtect, &flOldProtect) == FALSE) {
+					_HeapFree(lpSearchBuffer);
 					return GetLastError();
-				}
-
-				// Set true.
-				*bIsPatched = TRUE;
-				break;
 			}
+			*bIsPatched = true;
+			break;
+			
 		}
 	}
-
-	_HeapFree(lpReadPattern);
+	_HeapFree(lpSearchBuffer);
 
 	return ERROR_SUCCESS;
 }
