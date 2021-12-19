@@ -160,7 +160,7 @@ ULONG FileDownload(LPCWSTR szUrl, LPBYTE *lpDownloaded, PSIZE_T nBytesDownloaded
 			uError = GetLastError();
 			goto fail_2;
 		}
-	} while (dwRead >= _1K && dwRead != 0);
+	} while (dwTotalRead >= _1K && dwRead != 0);
 
 	*nBytesDownloaded = dwTotalRead;
 
