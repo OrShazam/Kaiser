@@ -403,7 +403,7 @@ ULONG ProcessSetPrivilege(HANDLE hProcess, LPCWSTR szPrivilege, BOOL bEnablePriv
 	if (OpenProcessToken(hProcess, TOKEN_ADJUST_PRIVILEGES, &hToken) == FALSE) {
 		return GetLastError();
 	}
-
+	//PrivilegeSetPrivilege(hToken, szPrivilege, bEnablePrivilege);
 	PrivilegeSetPrivilege(hToken, SE_DEBUG_NAME, TRUE);
 	CloseHandle(hToken);
 
