@@ -376,7 +376,7 @@ ULONG ProcessPatchMemoryPattern(HANDLE hProcess, DWORD_PTR dwBaseAddress, DWORD_
 			}
 
 				// Replace if pattern matches.
-			if (WriteProcessMemory(hProcess, lpTargetAddress, lpReplacePattern, nReplaceSize, NULL) == FALSE) {
+			if (WriteProcessMemory(hProcess, lpTargetAddress + dwOffset, lpReplacePattern, nReplaceSize, NULL) == FALSE) {
 					_HeapFree(lpSearchBuffer);
 					return GetLastError();
 			}
