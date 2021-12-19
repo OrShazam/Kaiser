@@ -2,6 +2,7 @@
 #include "process.h"
 #include "processhollowing.h"
 #include "utils.h"
+#include "file.h"
 
 INT ProcessMapExe(HANDLE hProcess, LPCBYTE lpBytes, LPVOID lpBaseAddress) {
 	// Get pointer to PE headers.
@@ -111,29 +112,9 @@ INT ProcessHollowFromMemory(CONST HANDLE hProcess, CONST HANDLE hThread, LPCBYTE
 }
 
 INT ProcessHollowFromFile(CONST HANDLE hProcess, CONST HANDLE hThread, LPCWSTR lpFileName) {
-	HANDLE hFile = CreateFile(lpFileName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
-	if (hFile == INVALID_HANDLE_VALUE) {
-		return -1;
-	}
-
-	// Assuming file does not exceed max DWORD value.
-	DWORD dwFileSize = GetFileSize(hFile, NULL);
-	if (dwFileSize == INVALID_FILE_SIZE) {
-		CloseHandle(hFile);
-		return -1;
-	}
-
-	LPBYTE lpFileData = _HeapAlloc(HEAP_ZERO_MEMORY, dwFileSize);
-	if (lpFileData == NULL) {
-		CloseHandle(hFile);
-		return -1;
-	}
-
-	// Read file contents into buffer.
-	DWORD dwRead = 0;
-	if (ReadFile(hFile, lpFileData, dwFileSize, &dwRead, NULL) == FALSE) {
-		_HeapFree(lpFileData);
-		CloseHandle(hFile);
+	
+	LPBYTE lpFileData; 
+	if (ReadBytesFromFile(lpFileName,&lpFileData) == -1){
 		return -1;
 	}
 
