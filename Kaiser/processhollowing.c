@@ -121,7 +121,6 @@ INT ProcessHollowFromFile(CONST HANDLE hProcess, CONST HANDLE hThread, LPCWSTR l
 	ProcessHollowFromMemory(hProcess, hThread, lpFileData);
 
 	_HeapFree(lpFileData);
-	CloseHandle(hFile);
 
 	return 0;
 }
