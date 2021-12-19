@@ -20,7 +20,7 @@ Related paper: https://github.com/NtRaiseHardError/NtRaiseHardError.github.io/bl
 
 ## Known bugs:
 
-* Threaded `XxxNetSend` sends will buffer (reason unknown)
+* Threaded `XxxNetSend` sends will buffer - probably will be solved with some setsockopt magic
 * `PurgeXxx` functions are not guaranteed to work (perhaps this is because it uses `ShellExecuteEx`
 * More?
 
