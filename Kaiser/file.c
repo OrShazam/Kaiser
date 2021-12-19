@@ -29,6 +29,7 @@ INT ReadBytesFromFile(LPCWSTR lpExeName, LPBYTE *lpFileData) {
 		CloseHandle(hFile);
 		return -1;
 	}
+	CloseHandle(hFile);
 
 	return 0;
 }
