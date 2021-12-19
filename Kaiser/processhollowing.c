@@ -93,7 +93,7 @@ INT ProcessHollowFromMemory(CONST HANDLE hProcess, CONST HANDLE hThread, LPCBYTE
 	}
 
 	// Map the executable file's bytes into the process space.
-	if (ProcessMapExe(hProcess, lpBytes, pBaseAddr) == -1) {
+	if (ProcessMapExe(hProcess, lpBytes, PeGetAddressOfEntryPoint(lpBytes)) == -1) {
 		// Error.
 		return -1;
 	}
