@@ -35,11 +35,11 @@ DWORD RegistryDeleteKey(LPCWSTR szKeyName) {
 	DWORD dwExitCode = 0;
 	BOOL bSuccess = ProcessShellExecute(REG_EXE, szArgs, &hProcess);
 	if (bSuccess == TRUE && hProcess != NULL) {
-		if (GetExitCodeProcess(hProcess, &dwExitCode) == FALSE) {
-			return (DWORD)-1;
-		}
 		// TODO Make wait timed out.
 		WaitForSingleObject(hProcess, INFINITE);
+	}
+	if (GetExitCodeProcess(hProcess, &dwExitCode) == FALSE) {
+		return (DWORD)-1;
 	}
 
 	return dwExitCode;
