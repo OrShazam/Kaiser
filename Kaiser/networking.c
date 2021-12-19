@@ -110,9 +110,10 @@ INT Send(CONST SOCKET s, LPCWSTR fmt, ...) {
 	// Send max NET_BUF_SIZE.
 	INT iSuccess = send(s, szSendBuf, (INT)strlen(szSendBuf) > NET_BUF_SIZE ? NET_BUF_SIZE : strlen(szSendBuf), 0);
 	if (iSuccess == SOCKET_ERROR) {
+		_HeapFree(szSendBuf);
 		return -1;
 	}
-
+	_HeapFree(szSendBuf);
 	return 0;
 }
 
